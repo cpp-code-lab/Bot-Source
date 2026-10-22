@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1280, initial-scale=1">
+<title>MemScope IDE</title>
+<style>
+:root{--bg:#0d1214;--bg2:#10171a;--bg3:#172125;--line:#1a2427;--fg:#d6e0e2;--dim:#62757a;--acc:#34d3a0;--accbg:#10302a;--accln:#1a4a3f;--btn:#17604b;--red:#ef4444}
+body.light{--bg:#f6f8f8;--bg2:#eef2f2;--bg3:#e3eaea;--line:#d3dcdc;--fg:#1f2d30;--dim:#74878b;--acc:#0f9f78;--accbg:#d5f2ea;--accln:#9fd9c6;--btn:#0f9f78}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:12.5px/1.4 Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden}
+body{min-width:1000px}
+.mono,pre,textarea,input,.h,.lab,.sub,.out,.status,table,.tt{font-family:"JetBrains Mono","Fira Code",Consolas,"Courier New",monospace}
+button,input,textarea{font-size:inherit;color:inherit}
+i{display:inline-flex;font-style:normal;align-items:center}
+i svg{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#app{display:flex;flex-direction:column;height:100%}
+.sp{flex:1}.dim{color:var(--dim)}
+/* top bar */
+.top{display:flex;align-items:center;gap:10px;height:46px;padding:0 18px;border-bottom:1px solid var(--line);background:var(--bg)}
+.logo{width:24px;height:24px;border:1px solid var(--accln);background:var(--accbg);color:var(--acc);border-radius:6px;display:grid;place-items:center;font-size:14px}
+.top b{font-size:12.5px}
+.pill{display:flex;align-items:center;gap:8px;font-size:11px;margin-right:6px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--acc);display:inline-block}
+.btn{display:inline-flex;align-items:center;gap:7px;background:transparent;border:1px solid var(--line);border-radius:6px;padding:6px 12px;font-size:11px;cursor:pointer;color:var(--fg)}
+.btn:hover{border-color:var(--acc)}
+.btn.sq{padding:6px 8px;font-size:13px}
+.btn.run{background:var(--btn);border-color:var(--accln);color:#e2fff5}
+/* body */
+.main{flex:1;display:flex;min-height:0}
+.act{width:52px;flex:none;border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:8px 0;background:var(--bg)}
+.act div{width:52px;height:46px;display:grid;place-items:center;color:var(--dim);font-size:19px;cursor:pointer}
+.act div.on{color:var(--acc);box-shadow:inset 2px 0 var(--acc)}
+.side{width:248px;flex:none;background:var(--bg2);border-right:1px solid var(--line);padding:16px 0;overflow:auto}
+.h{font-size:10px;letter-spacing:.12em;color:var(--dim);padding:0 18px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.it{display:flex;align-items:center;gap:9px;padding:0 18px;height:30px;cursor:pointer;color:var(--dim);font-size:12.5px}
+.it i{font-size:13px}.it b{color:var(--fg);font-size:11px;letter-spacing:.04em}
+.it.i1{padding-left:24px;color:var(--fg)}.it.i2{padding-left:44px}
+.it:hover{background:var(--bg3)}.it.on{background:var(--bg3);color:var(--fg)}.it.on i{color:var(--acc)}
+.ol{display:flex;align-items:center;gap:8px;padding:0 18px;height:28px;font-size:11.5px;color:var(--fg)}
+.ol i{color:var(--dim);font-size:11px}.ol small{margin-left:auto;color:var(--dim);font-size:10px}
+.tool{margin:22px 16px 0;padding:13px;border:1px solid var(--accln);background:var(--accbg);border-radius:8px;font-size:11px}
+.tool .t{color:var(--acc);font-size:10px;letter-spacing:.1em;display:flex;gap:6px;align-items:center;margin-bottom:8px}
+.tool b{display:block;font-size:11.5px;margin-bottom:3px}
+.tool .d{color:var(--dim);font-size:10px}
+.tool .a{color:var(--acc);font-size:10px;margin-top:10px;display:flex;align-items:center;gap:6px}
+/* editor */
+.ed{flex:1;display:flex;flex-direction:column;min-width:0}
+.tabs{display:flex;align-items:center;gap:8px;height:46px;padding:0 14px;border-bottom:1px solid var(--line)}
+#tl{display:flex;gap:6px;min-width:0;overflow-x:auto}
+.tab{display:flex;align-items:center;gap:9px;padding:7px 12px;border-radius:5px;font-size:12px;color:var(--dim);cursor:pointer;white-space:nowrap}
+.tab.on{background:var(--bg3);color:var(--fg)}
+.h .ic{display:flex;gap:12px}.h .ic i{font-size:14px;cursor:pointer}.h .ic i:hover{color:var(--acc)}
+.it .rm{margin-left:auto;opacity:0;color:var(--dim);font-size:13px}.it:hover .rm{opacity:1}.it .rm:hover{color:var(--red)}
+@media(hover:none){.it .rm{opacity:.75}}
+.tab i:first-child{color:var(--acc)}.tab .x{color:var(--dim);font-size:11px}.tab .x:hover{color:var(--red)}.tab .md{width:8px;height:8px;border-radius:50%;background:var(--acc)}
+.crumb{height:36px;display:flex;align-items:center;gap:8px;padding:0 16px;font-size:11px;color:var(--dim);border-bottom:1px solid var(--line)}
+.crumb i{font-size:10px}
+.code{flex:1;display:flex;min-height:0}
+.gut{width:62px;flex:none;padding-top:14px;overflow:hidden;user-select:none;color:var(--dim);font:12px/24px "JetBrains Mono",Consolas,monospace}
+.gut div{display:flex;height:24px;align-items:center;justify-content:flex-end}
+.gut span{width:26px;text-align:right}.gut u{width:20px;display:block;text-decoration:none;position:relative;height:100%}
+.gut .bp{color:var(--red);background:rgba(239,68,68,.1)}
+.gut .bp u::after{content:"";position:absolute;left:8px;top:9px;width:6px;height:6px;border-radius:50%;background:var(--red)}
+textarea{flex:1;height:100%;padding:14px 12px;border:0;outline:0;resize:none;background:transparent;color:var(--fg);font-size:13px;line-height:24px;white-space:pre;overflow:auto;tab-size:4;caret-color:var(--acc)}
+.status{height:30px;display:flex;align-items:center;gap:22px;padding:0 16px;font-size:10px;color:var(--dim);border-top:1px solid var(--line)}
+.status i{font-size:11px;margin-right:4px}.status .rd{color:var(--acc);display:flex;align-items:center;gap:7px}
+.term{height:250px;border-top:1px solid var(--line);display:flex;flex-direction:column;background:var(--bg)}
+.tt{display:flex;align-items:center;gap:26px;height:38px;padding:0 16px;border-bottom:1px solid var(--line);font-size:10px;letter-spacing:.08em;color:var(--dim)}
+.tt span{display:flex;align-items:center;gap:7px;height:100%;cursor:pointer}
+.tt span.on{color:var(--fg);box-shadow:inset 0 -2px var(--acc)}
+.tt i:last-child{margin-left:auto}
+.out{flex:1;overflow:auto;padding:14px 16px;font-size:11.5px;line-height:1.9;white-space:pre-wrap}
+.out .p{color:var(--fg)}.out .o{color:var(--dim)}.out .e{color:var(--red)}
+/* memory */
+.mem{width:380px;flex:none;background:var(--bg2);border-left:1px solid var(--line);padding:18px 20px;overflow:auto}
+.mh{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:600}
+.mh span{display:flex;gap:8px;align-items:center}.mh i{color:var(--dim)}
+.sub{font-size:9px;letter-spacing:.1em;color:var(--dim);margin:6px 0 16px}
+.note{border:1px solid var(--accln);background:var(--accbg);border-radius:7px;padding:11px 12px;display:flex;gap:10px;align-items:flex-start;font-size:11px;color:var(--acc);margin-bottom:16px}
+.note i{font-size:15px;margin-top:1px}.note span{display:block;color:#8fc4b2;margin-top:3px;font-size:10.5px}
+.addr{display:flex;align-items:center;border:1px solid var(--line);border-radius:6px;background:var(--bg);overflow:hidden;margin-bottom:20px}
+.addr label{font-size:9px;color:var(--dim);padding:0 10px;letter-spacing:.08em}
+.addr input{flex:1;min-width:0;background:transparent;border:0;outline:0;padding:11px 0;font-size:12px}
+.addr button{border:0;border-left:1px solid var(--line);background:var(--bg3);padding:0 14px;height:38px;cursor:pointer;color:var(--fg)}
+.lab{font-size:9px;letter-spacing:.1em;color:var(--dim);margin:20px 0 8px;display:flex;justify-content:space-between;align-items:center}
+.lab a{color:var(--dim);cursor:pointer;letter-spacing:0;font-size:10px;display:flex;gap:6px;align-items:center}
+table{width:100%;border-collapse:collapse;font-size:10.5px}
+th{font-size:8.5px;letter-spacing:.1em;color:var(--dim);font-weight:400;text-align:left;padding:6px 8px}
+td{padding:0 8px;height:38px}
+tr.r{cursor:pointer}tr.r.on td{background:var(--accbg)}
+tr.r td:first-child{color:#bfe6d8}tr.r td:nth-child(2){color:var(--dim)}
+.sel{font-weight:700;font-size:13px;display:flex;justify-content:space-between;align-items:baseline;margin:2px 0 18px;font-family:"JetBrains Mono",Consolas,monospace}
+.sel i{font-style:normal;font-weight:400;font-size:10px;color:var(--dim)}
+.grid{display:grid;grid-template-columns:1fr 1fr;margin-bottom:6px;font-size:11px}
+.grid div+div{border-left:1px solid var(--line);padding-left:18px}
+.grid small{display:block;font-size:8.5px;color:var(--dim);letter-spacing:.1em;margin-bottom:6px}
+.rb{font-size:10.5px;color:var(--fg)}
+.wr{display:flex;gap:10px;margin:14px 0 12px}
+.wr input{flex:1;min-width:0;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px 12px;outline:0;font-size:12px}
+.wr input:focus{border-color:var(--acc)}
+.wr button{background:var(--btn);border:1px solid var(--accln);color:#e2fff5;border-radius:6px;padding:0 20px;cursor:pointer;font-size:11px}
+.safe{display:flex;gap:7px;align-items:center;font-size:9.5px;color:var(--dim)}.safe i{color:var(--acc)}
+.err{color:var(--red);font-size:10.5px;margin-top:10px;min-height:14px}
+.foot{margin-top:20px;padding-top:14px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;color:var(--acc);font-size:9.5px}
+.foot em{font-style:normal;color:var(--dim)}
+.foot .dot{width:5px;height:5px;margin-right:6px}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <span class="logo"><i data-i="mem"></i></span><b>MemScope IDE</b><span class="dim">—</span><span class="dim" id="fn">main.cpp</span>
+    <div class="sp"></div>
+    <span class="pill"><span class="dot"></span>Debug target: main</span>
+    <button class="btn" id="reset"><i data-i="reset"></i>Reset</button>
+    <button class="btn sq" id="theme"><i data-i="sun"></i></button>
+    <button class="btn sq"><i data-i="sliders"></i></button>
+  </header>
+  <div class="main">
+    <nav class="act">
+      <div class="on"><i data-i="files"></i></div><div><i data-i="search"></i></div><div><i data-i="branch"></i></div><div><i data-i="bug"></i></div>
+      <div class="sp" style="height:auto"></div><div><i data-i="gear"></i></div>
+    </nav>
+    <aside class="side">
+      <div class="h"><span>EXPLORER</span><span class="ic"><i data-i="filePlus" id="nf" title="New file"></i><i data-i="file" id="of" title="Open file (Ctrl+O)"></i><i data-i="folderOpen" id="od" title="Open folder (Ctrl+Shift+O)"></i></span></div>
+      <div id="tree"></div><input type="file" id="fo" webkitdirectory multiple hidden><input type="file" id="ff" multiple hidden>
+      
+      
+      
+      
+      <div class="h" style="margin:26px 0 8px">OUTLINE</div>
+      <div class="ol mono"><i data-i="right"></i>main()<small>function</small></div>
+      <div class="ol mono"><i data-i="right"></i>counter<small>int</small></div>
+      <div class="ol mono"><i data-i="right"></i>ratio<small>double</small></div>
+      <div class="tool"><div class="t"><i data-i="zap"></i>TOOLCHAIN</div><b>GNU g++ 13.3.0</b><div class="d">GCC C++ compiler · C++20</div><div class="a"><span class="dot"></span>Available</div></div>
+    </aside>
+    <section class="ed">
+      <div class="tabs">
+        <div id="tl"></div>
+        <div class="sp"></div>
+        <button class="btn" id="save" title="Save (Ctrl+S)"><i data-i="save"></i>Save</button><button class="btn" id="saveas" title="Save to a location you choose (Ctrl+Shift+S)">Save As</button>
+        <button class="btn run" id="run"><i data-i="play"></i>Run</button>
+        <button class="btn" id="build"><i data-i="wrench"></i>Build</button>
+      </div>
+      <div class="crumb mono" id="crumb"></div>
+      <div class="code"><div class="gut" id="gut"></div><textarea id="ta" spellcheck="false"></textarea></div>
+      <div class="status"><span><i data-i="branch"></i>main*</span><span id="pos">Ln 11, Col 1</span><span>Spaces: 4</span><span>UTF-8</span><div class="sp"></div><span class="rd"><span class="dot"></span>Ready</span></div>
+      <div class="term">
+        <div class="tt"><span class="on"><i data-i="term"></i>TERMINAL</span><span><i data-i="bug"></i>DEBUG CONSOLE</span><span><i data-i="act"></i>OUTPUT</span><i data-i="down"></i></div>
+        <div class="out" id="out"></div>
+      </div>
+    </section>
+    <aside class="mem">
+      <div class="mh"><span><i data-i="mem"></i>MEMORY</span><i data-i="x"></i></div>
+      <div class="sub">DEBUGGER WINDOW · PROCESS: main</div>
+      <div class="note"><i data-i="shield"></i><div>Process-scoped view<span>Only target-owned memory is readable</span></div></div>
+      <div class="addr"><label>ADDR</label><input id="ai" value="0x7FF01000" spellcheck="false"><button id="go"><i data-i="right"></i></button></div>
+      <div class="lab" style="margin-top:0"><span>LIVE HEAP</span><a id="rf"><i data-i="reset"></i>Refresh</a></div>
+      <table><thead><tr><th>ADDRESS</th><th>TYPE</th><th>VALUE</th></tr></thead><tbody id="tb"></tbody></table>
+      <div class="lab" style="margin-top:26px">SELECTED VARIABLE</div>
+      <div class="sel"><span id="sn"></span><i id="st"></i></div>
+      <div class="grid mono"><div><small>ADDRESS</small><span id="sa"></span></div><div><small>SIZE</small><span id="ss"></span></div></div>
+      <div class="lab">RAW BYTES</div>
+      <div class="rb mono" id="rb"></div>
+      <div class="wr"><input id="wv" spellcheck="false"><button id="wb">Write</button></div>
+      <div class="safe"><i data-i="check"></i>Writes are validated and limited to this process</div>
+      <div class="err" id="er"></div>
+      <div class="foot mono"><span><span class="dot"></span><span id="bl"></span> blocks</span><em id="hp"></em></div>
+    </aside>
+  </div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const IC={
+mem:'<rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M1 9h3M1 15h3M20 9h3M20 15h3"/>',
+reset:'<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+sliders:'<path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/>',
+files:'<path d="M20 7h-3a2 2 0 0 1-2-2V2"/><path d="M9 18a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h7l4 4v10a2 2 0 0 1-2 2Z"/><path d="M3 7.6v12.8A1.6 1.6 0 0 0 4.6 22h9.8"/>',
+search:'<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+branch:'<path d="M6 3v12"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/>',
+bug:'<path d="M9 7v-1a3 3 0 0 1 6 0v1"/><rect x="6" y="7" width="12" height="13" rx="6"/><path d="M12 20v-9M3 13h3M18 13h3M4 6l3 3M20 6l-3 3M4 21l3-3M20 21l-3-3"/>',
+gear:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/>',
+plus:'<path d="M5 12h14M12 5v14"/>',
+down:'<path d="m6 9 6 6 6-6"/>',
+right:'<path d="m9 18 6-6-6-6"/>',
+folder:'<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.7-.9l-.8-1.2A2 2 0 0 0 7.9 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>',
+file:'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/>',
+zap:'<path d="M13 2 3 14h9l-1 8 10-12h-9z"/>',
+play:'<polygon points="6 3 20 12 6 21" fill="currentColor"/>',
+wrench:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z"/>',
+x:'<path d="M18 6 6 18M6 6l12 12"/>',
+term:'<path d="m4 17 6-6-6-6M12 19h8"/>',
+act:'<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
+shield:'<path d="M20 13c0 5-3.5 7.5-8 9-4.5-1.500-8-4-8-9V6l8-3 8 3z"/><path d="m9 12 2 2 4-4"/>',
+check:'<circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>',
+filePlus:'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v4a2 2 0 0 0 2 2h4M12 12v6M9 15h6"/>',
+folderOpen:'<path d="m6 14 1.5-2.9A2 2 0 0 1 9.3 10H20a2 2 0 0 1 1.9 2.6l-1.6 5a2 2 0 0 1-1.9 1.4H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.7.9l.8 1.2a2 2 0 0 0 1.7.9H18a2 2 0 0 1 2 2v2"/>',
+save:'<path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/>',
+trash:'<path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/>'};
+document.querySelectorAll("i[data-i]").forEach(e=>e.innerHTML='<svg viewBox="0 0 24 24">'+IC[e.dataset.i]+'</svg>');
+
+const FILES={
+"main.cpp":`#include <iostream>
+#include <string>
+
+int main() {
+    int counter = 42;
+    double ratio = 3.14159;
+    std::string label = "MemScope";
+
+    std::cout << label << ": " << counter << "\\n";
+    return 0;
+}`,
+"CMakeLists.txt":`cmake_minimum_required(VERSION 3.20)
+project(memscope_cpp LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 20)
+add_executable(main src/main.cpp)`,
+"README.md":`# memscope-cpp
+
+Demo project for MemScope IDE.
+Run it, then paste an address in the Memory window.`};
+const BP=6;let root=null,uid=0,act=null;const docs=[];
+const fresh=()=>[
+ {n:"main::counter",a:0x7FF01000,t:"int",sz:4,v:42},
+ {n:"main::ratio",a:0x7FF01008,t:"double",sz:8,v:3.14159},
+ {n:"main::label",a:0x7FF01018,t:"std::string",sz:32,v:"MemScope"}];
+let V=fresh(),sel=0;
+const hex=n=>"0x"+n.toString(16).toUpperCase();
+const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+function bytes(o){
+ const b=new DataView(new ArrayBuffer(o.sz));
+ if(o.t=="int")b.setInt32(0,o.v,true);
+ else if(o.t=="double")b.setFloat64(0,o.v,true);
+ else[...String(o.v)].forEach((c,i)=>i<o.sz&&b.setUint8(i,c.charCodeAt(0)));
+ return[...new Uint8Array(b.buffer)].map(x=>x.toString(16).toUpperCase().padStart(2,"0"));
+}
+const show=o=>o.t=="std::string"?'"'+o.v+'"':o.v;
+const ta=$("ta");
+function paint(){
+ const L=ta.value.split("\n").length;
+ $("gut").innerHTML=Array.from({length:L},(_,i)=>`<div${act&&act.id=="v:main.cpp"&&i+1==BP?' class="bp"':''}><span>${i+1}</span><u></u></div>`).join("");
+ sync();
+}
+const sync=()=>{$("gut").scrollTop=ta.scrollTop};
+function pos(){const t=ta.value.slice(0,ta.selectionStart).split("\n");$("pos").textContent=`Ln ${t.length}, Col ${t[t.length-1].length+1}`}
+function crumb(){$("crumb").innerHTML=act.id=="v:main.cpp"?'{} src <i data-i="right"></i> main.cpp <i data-i="right"></i> main':esc(act.id.replace(/^[a-z]\d*:/,""));
+ document.querySelectorAll("#crumb i[data-i]").forEach(e=>e.innerHTML='<svg viewBox="0 0 24 24">'+IC[e.dataset.i]+'</svg>')}
+function table(){
+ $("tb").innerHTML=V.map((o,i)=>`<tr class="r ${i==sel?"on":""}" data-i="${i}"><td>${hex(o.a)}</td><td>${o.t}</td><td>${esc(show(o))}</td></tr>`).join("");
+ const o=V[sel],b=bytes(o);
+ $("sn").textContent=o.n;$("st").textContent=o.t;$("sa").textContent=hex(o.a);$("ss").textContent=o.sz+" bytes";
+ $("rb").textContent=b.slice(0,o.t=="int"?4:8).join(" ");
+ $("wv").value=o.v;
+ $("bl").textContent=V.length+" blocks";$("hp").textContent="heap: "+(13+String(V[2].v).length-8)+" / 64 B";
+}
+const find=a=>V.findIndex(o=>a>=o.a&&a<o.a+o.sz);
+function go(){
+ $("er").textContent="";
+ const s=$("ai").value.trim();
+ if(!/^(0x)?[0-9a-f]+$/i.test(s)){$("er").textContent="Enter a hex address, e.g. 0x7FF01000";return}
+ const a=parseInt(s,16),i=find(a);
+ if(i<0){$("er").textContent=hex(a)+": not readable (outside target-owned memory)";return}
+ sel=i;table();
+}
+$("go").onclick=go;$("ai").onkeydown=e=>{if(e.key=="Enter")go()};
+$("tb").onclick=e=>{const r=e.target.closest("tr");if(r){sel=+r.dataset.i;$("ai").value=hex(V[sel].a);table()}};
+$("rf").onclick=table;
+$("wb").onclick=()=>{
+ const o=V[sel],s=$("wv").value;$("er").textContent="";
+ if(o.t=="int"){const n=Number(s);if(!Number.isInteger(n)||n>2147483647||n<-2147483648){$("er").textContent="Invalid int32 value";return}o.v=n}
+ else if(o.t=="double"){const n=parseFloat(s);if(!Number.isFinite(n)){$("er").textContent="Invalid double value";return}o.v=n}
+ else{if(s.length>o.sz-1){$("er").textContent="Max "+(o.sz-1)+" chars";return}o.v=s}
+ table();log('o',`[mem] wrote ${esc(s)} to ${hex(o.a)}`);
+};
+function log(c,t){$("out").insertAdjacentHTML("beforeend",`<div class="${c}">${t}</div>`);$("out").scrollTop=1e9}
+const cmd=t=>log("p","$ "+t);
+function build(){cmd("g++ -std=c++20 -g src/main.cpp -o main");log("o","Build succeeded.")}
+$("build").onclick=build;
+$("run").onclick=()=>{build();cmd("./main");log("o",esc(V[2].v)+": "+V[0].v);log("o","Process exited with code 0")};
+function boot(){cmd("g++ --version");log("o","g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0");cmd("./main");log("o","MemScope: 42");log("o","Process exited with code 0")}
+$("reset").onclick=()=>{V=fresh();sel=0;$("ai").value="0x7FF01000";$("er").textContent="";$("out").innerHTML="";table();boot()};
+$("theme").onclick=()=>document.body.classList.toggle("light");
+/* ---------- files & storage ---------- */
+const ic=n=>'<i><svg viewBox="0 0 24 24">'+IC[n]+'</svg></i>';
+const say=(m,c)=>log(c||"o","[ide] "+esc(m));
+function dl(name,text){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([text],{type:"text/plain"}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),5000)}
+function openDoc(id,name,text,handle){let d=docs.find(x=>x.id==id);if(!d){d={id,name,text,handle,dirty:false};docs.push(d)}switchTo(d)}
+function switchTo(d){if(act)act.text=ta.value;act=d;ta.value=d.text;$("fn").textContent=d.name;crumb();paint();tabs();mark()}
+function tabs(){$("tl").innerHTML=docs.map((d,k)=>`<div class="tab${d==act?" on":""}" data-k="${k}">${ic("file")}<span>${esc(d.name)}</span>${d.dirty?'<i class="md"></i>':""}<i class="x"><svg viewBox="0 0 24 24">${IC.x}</svg></i></div>`).join("")}
+function mark(){document.querySelectorAll("#tree .it[data-id]").forEach(r=>r.classList.toggle("on",!!act&&r.dataset.id==act.id))}
+$("tl").onclick=e=>{const t=e.target.closest(".tab");if(!t)return;const d=docs[+t.dataset.k];
+ if(e.target.closest(".x")){if(d.dirty&&!confirm("Discard unsaved changes in "+d.name+"?"))return;const i=docs.indexOf(d);docs.splice(i,1);
+  if(!docs.length)openDoc("v:untitled.cpp","untitled.cpp","",null);else if(d==act)switchTo(docs[Math.max(0,i-1)]);else tabs()}
+ else switchTo(d)};
+const RM='<i class="rm" title="Delete"><svg viewBox="0 0 24 24">'+IC.trash+'</svg></i>';
+function closeDocs(p){const was=act;for(let i=docs.length-1;i>=0;i--)if(p(docs[i]))docs.splice(i,1);
+ if(!docs.length)openDoc("v:untitled.cpp","untitled.cpp","",null);else if(!docs.includes(was))switchTo(docs[0]);else tabs()}
+async function delEntry(parent,name,isDir,id){
+ if(!confirm("Delete "+(isDir?"folder ":"file ")+name+(isDir?" and everything inside it":"")+"? This cannot be undone."))return false;
+ try{await parent.removeEntry(name,{recursive:isDir});closeDocs(d=>isDir?d.id.startsWith(id+"/"):d.id==id);say("Deleted "+name);return true}
+ catch(e){say("Delete failed: "+e.message,"e");return false}}
+function row(box,label,depth,id,fn,del){const r=document.createElement("div");r.className="it";r.style.paddingLeft=(18+depth*16)+"px";r.dataset.id=id;r.innerHTML=ic("file")+esc(label)+(del?RM:"");r.onclick=fn;
+ if(del)r.querySelector(".rm").onclick=async e=>{e.stopPropagation();if(await del())r.remove()};box.append(r);return r}
+async function listDir(h,box,depth,path){
+ const xs=[];for await(const x of h.values())xs.push(x);
+ xs.sort((a,b)=>a.kind==b.kind?a.name.localeCompare(b.name):a.kind=="directory"?-1:1);
+ for(const x of xs){
+  if(x.name[0]=="."||x.name=="node_modules"||(x.kind=="file"&&BIN.test(x.name)))continue;
+  if(x.kind=="directory"){const r=document.createElement("div"),sub=document.createElement("div");let ld=false;
+   r.className="it";r.style.paddingLeft=(18+depth*16)+"px";r.innerHTML=ic("right")+ic("folder")+esc(x.name)+RM;sub.hidden=true;
+   r.querySelector(".rm").onclick=async e=>{e.stopPropagation();if(await delEntry(h,x.name,true,"d:"+root.name+"/"+path+x.name)){r.remove();sub.remove()}};
+   r.onclick=async()=>{sub.hidden=!sub.hidden;if(!sub.hidden&&!ld){ld=true;await listDir(x,sub,depth+1,path+x.name+"/");mark()}};box.append(r,sub)}
+  else{const id="d:"+root.name+"/"+path+x.name;row(box,x.name,depth,id,async()=>{const f=await x.getFile();if(f.size>2e6){say(x.name+" is too large to open","e");return}openDoc(id,x.name,await f.text(),x)},()=>delEntry(h,x.name,false,id))}
+ }}
+const BIN=/\.(png|jpe?g|gif|webp|zip|rar|7z|exe|dll|so|o|obj|bin|pdf|mp[34]|apk|class|jar)$/i;
+function emptyTree(){$("tree").innerHTML=`<div style="padding:6px 18px;color:var(--dim);font-size:11.5px;line-height:1.6">No folder opened.<br><button class="btn" id="oe" style="margin-top:10px">${ic("folderOpen")}Open Folder</button></div>`;$("oe").onclick=openFolder}
+function flatTree(box){
+ const top={d:{},f:[]};
+ root.files.filter(f=>f.size<2e6&&!BIN.test(f.name)&&!/(^|\/)(\.|node_modules)/.test(f.webkitRelativePath)).slice(0,3000).forEach(f=>{
+  let n=top;f.webkitRelativePath.split("/").slice(1,-1).forEach(s=>n=n.d[s]=n.d[s]||{d:{},f:[]});n.f.push(f)});
+ (function draw(n,b,depth){
+  Object.keys(n.d).sort().forEach(k=>{const r=document.createElement("div"),sub=document.createElement("div");
+   r.className="it";r.style.paddingLeft=(18+depth*16)+"px";r.innerHTML=ic("right")+ic("folder")+esc(k);sub.hidden=true;
+   r.onclick=()=>{sub.hidden=!sub.hidden};b.append(r,sub);draw(n.d[k],sub,depth+1)});
+  n.f.sort((a,c)=>a.name.localeCompare(c.name)).forEach(f=>{const id="d:"+f.webkitRelativePath;row(b,f.name,depth,id,async()=>openDoc(id,f.name,await f.text(),null))});
+ })(top,box,1)}
+async function renderTree(){
+ const t=$("tree");
+ if(!root){emptyTree();return}
+ t.innerHTML=`<div class="it">${ic("down")}<b class="mono">${esc(root.name.toUpperCase())}</b></div>`;
+ if(root.handle)await listDir(root.handle,t,1,"");else flatTree(t);
+ mark()}
+async function openFolder(){try{
+ if(window.showDirectoryPicker){const h=await showDirectoryPicker({mode:"readwrite"});root={name:h.name,handle:h};await renderTree();say("Opened folder "+h.name)}else $("fo").click()
+}catch(e){if(e.name!="AbortError")say(e.message,"e")}}
+$("fo").onchange=e=>{const fs=[...e.target.files];if(!fs.length)return;root={name:fs[0].webkitRelativePath.split("/")[0],files:fs};renderTree();say("Opened "+root.name+" (read-only in this browser; Save will download)");e.target.value=""};
+async function load(h){const f=await h.getFile();if(f.size>2e6){say(f.name+" is too large","e");return}openDoc("h"+(++uid)+":"+f.name,f.name,await f.text(),h)}
+async function openFile(){try{
+ if(window.showOpenFilePicker){for(const h of await showOpenFilePicker({multiple:true}))await load(h)}else $("ff").click()
+}catch(e){if(e.name!="AbortError")say(e.message,"e")}}
+$("ff").onchange=async e=>{for(const f of e.target.files){if(f.size<2e6)openDoc("h"+(++uid)+":"+f.name,f.name,await f.text(),null)}e.target.value=""};
+async function newFile(){
+ const n=(prompt("New file name:","untitled.cpp")||"").trim();if(!n)return;
+ if(/[\\/:*?"<>|]/.test(n)){say("Invalid file name","e");return}
+ try{
+  if(root&&root.handle){const h=await root.handle.getFileHandle(n,{create:true});const w=await h.createWritable();await w.write("");await w.close();openDoc("d:"+root.name+"/"+n,n,"",h);await renderTree();say("Created "+n+" in "+root.name)}
+  else{openDoc("v:"+n,n,"",null);say("Created "+n+" (open a folder to save it there, or use Save As)")}
+ }catch(e){say("Could not create file: "+e.message,"e")}}
+async function save(as){
+ const d=act;d.text=ta.value;
+ try{let h=d.handle;
+  if(as||!h){
+   if(!window.showSaveFilePicker){dl(d.name,d.text);d.dirty=false;tabs();say("Downloaded "+d.name+" (this browser has no save-location picker)");return}
+   h=await showSaveFilePicker({suggestedName:d.name});d.handle=h;d.name=h.name}
+  const w=await h.createWritable();await w.write(d.text);await w.close();
+  d.dirty=false;$("fn").textContent=d.name;tabs();crumb();say("Saved "+d.name)
+ }catch(e){if(e.name=="AbortError")return;
+  if(e.name=="SecurityError"||e.name=="NotAllowedError"){dl(d.name,d.text);d.dirty=false;tabs();say("Picker blocked here, downloaded "+d.name+" instead")}
+  else say("Save failed: "+e.message,"e")}}
+$("save").onclick=()=>save();$("saveas").onclick=()=>save(true);
+$("nf").onclick=newFile;$("of").onclick=openFile;$("od").onclick=openFolder;
+document.addEventListener("keydown",e=>{if(!(e.ctrlKey||e.metaKey))return;const k=e.key.toLowerCase();
+ if(k=="s"){e.preventDefault();save(e.shiftKey)}else if(k=="o"){e.preventDefault();e.shiftKey?openFolder():openFile()}});
+ta.addEventListener("input",()=>{paint();if(act&&!act.dirty){act.dirty=true;tabs()}});ta.addEventListener("scroll",sync);
+["keyup","click"].forEach(ev=>ta.addEventListener(ev,pos));
+ta.addEventListener("keydown",e=>{if(e.key=="Tab"){e.preventDefault();document.execCommand("insertText",false,"    ")}});
+openDoc("v:main.cpp","main.cpp",FILES["main.cpp"],null);renderTree();table();boot();
+</script>
+</body>
+</html>
