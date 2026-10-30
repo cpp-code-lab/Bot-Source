@@ -8501,3 +8501,9 @@ if __name__ == '__main__':
         except Exception as e:
             print(f'❌ Error: {_safe_err(e)}')
             time.sleep(5)
+from flask import Flask
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Bot is running"
